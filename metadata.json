@@ -1,0 +1,6 @@
+{
+  "name": "Валерия и Павел | Свадебное приглашение",
+  "description": "Элегантное онлайн-приглашение на свадьбу Валерии и Павла, которая состоится 20 августа 2026 года.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
