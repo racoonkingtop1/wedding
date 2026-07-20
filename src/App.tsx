@@ -93,6 +93,26 @@ export default function App() {
   const playerInitStarted = useRef(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
+  // Preloader: wait for the hero photo, the QR code, and the music player,
+  // but never block the page for more than a few seconds if something is slow to load.
+  const [isHeroImageLoaded, setIsHeroImageLoaded] = useState(false);
+  const [isQrImageLoaded, setIsQrImageLoaded] = useState(false);
+  const [isLoadingTimedOut, setIsLoadingTimedOut] = useState(false);
+  const [showPreloader, setShowPreloader] = useState(true);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsLoadingTimedOut(true), 6000);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  const isAppReady = (isHeroImageLoaded && isQrImageLoaded && isPlayerReady) || isLoadingTimedOut;
+
+  useEffect(() => {
+    if (!isAppReady) return;
+    const timeout = setTimeout(() => setShowPreloader(false), 500);
+    return () => clearTimeout(timeout);
+  }, [isAppReady]);
+
   // Load the YouTube IFrame API once and mount a hidden player for the wedding song.
   // Guarded with a ref flag so StrictMode's double-invoked effect in dev doesn't
   // create a second player against the same target node.
@@ -181,6 +201,24 @@ export default function App() {
 
       {/* Hidden YouTube player powering the background wedding song */}
       <div id="youtube-audio-player" className="absolute w-px h-px -left-full overflow-hidden opacity-0 pointer-events-none" aria-hidden="true" />
+
+      {/* Full-page preloader shown until the hero photo, QR code and music player are ready */}
+      {showPreloader && (
+        <div
+          className={`fixed inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-[#EFE8DC] transition-opacity duration-500 ${
+            isAppReady ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-full border-2 border-[#DDD0BC]" />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#8C6F56] animate-spin" />
+            <Heart size={16} className="absolute inset-0 m-auto fill-[#8C6F56] text-[#8C6F56] animate-pulse" />
+          </div>
+          <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#8C6F56] font-sans">
+            Загрузка приглашения…
+          </span>
+        </div>
+      )}
 
       {/* 📜 RICH MULTI-LAYER VINTAGE PAPER & NOISE TEXTURES */}
       {/* Texture Layer 1: Cozy fine geometric grain */}
@@ -285,9 +323,9 @@ export default function App() {
 
             {/* Couple names heading */}
             <h1 className="font-serif text-3xl font-black text-[#3E352F] tracking-wide mb-5">
-              <span className="block italic text-4xl leading-tight text-[#8C6F56]">Павел</span>
-              <span className="block text-[11px] font-sans font-extrabold tracking-widest my-1 text-amber-900/40">— И —</span>
               <span className="block italic text-4xl leading-tight text-[#8C6F56]">Валерия</span>
+              <span className="block text-[11px] font-sans font-extrabold tracking-widest my-1 text-amber-900/40">— И —</span>
+              <span className="block italic text-4xl leading-tight text-[#8C6F56]">Павел</span>
             </h1>
 
             {/* 📸 MANDATORY RETRO POLAROID WITH THE EXACT REQUIRED GIF */}
@@ -295,9 +333,11 @@ export default function App() {
               <div className="w-full aspect-square bg-stone-100 rounded-sm overflow-hidden border border-stone-200 relative">
                 <img
                   src={EXACT_GIF_URL}
-                  alt="Павел и Валерия"
+                  alt="Валерия и Павел"
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
+                  onLoad={() => setIsHeroImageLoaded(true)}
+                  onError={() => setIsHeroImageLoaded(true)}
                 />
                 {/* Vintage overlay texture */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/10 pointer-events-none" />
@@ -496,11 +536,13 @@ export default function App() {
               </p>
 
               <div className="max-w-[240px] mx-auto bg-white p-3 border border-[#EBE4D8] rounded-2xl shadow-md transition-transform hover:scale-[1.01]">
-                <img 
-                  src="https://i.postimg.cc/fbNWSYYk/kanal-k-svad'be-Pasi-i-Lery.jpg" 
-                  alt="QR-код свадебного канала" 
+                <img
+                  src="https://i.postimg.cc/fbNWSYYk/kanal-k-svad'be-Pasi-i-Lery.jpg"
+                  alt="QR-код свадебного канала"
                   className="w-full h-auto rounded-xl"
                   referrerPolicy="no-referrer"
+                  onLoad={() => setIsQrImageLoaded(true)}
+                  onError={() => setIsQrImageLoaded(true)}
                 />
               </div>
 
