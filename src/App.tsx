@@ -10,10 +10,10 @@ import WeddingSchedule from './components/WeddingSchedule';
 import { 
   Heart, 
   MapPin, 
-  Volume2, 
-  VolumeX, 
+  Volume2,
+  VolumeX,
   Music,
-  Share2,
+  Link2,
   Calendar,
   Sparkles,
   Play,
@@ -133,8 +133,11 @@ export default function App() {
   const theme = THEMES.retro;
 
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
-  const [showNotification, setShowNotification] = useState<string | null>(null);
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(null);
+  const [isNotificationVisible, setIsNotificationVisible] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
+  const notificationHideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notificationUnmountTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const playerRef = useRef<any>(null);
   const playerInitStarted = useRef(false);
@@ -210,12 +213,16 @@ export default function App() {
     }
   }, []);
 
-  // Trigger brief floating notifications
+  // Trigger a brief floating notification that fades in, holds, then fades out
   const triggerNotification = (message: string) => {
-    setShowNotification(message);
-    setTimeout(() => {
-      setShowNotification(null);
-    }, 4000);
+    if (notificationHideTimeout.current) clearTimeout(notificationHideTimeout.current);
+    if (notificationUnmountTimeout.current) clearTimeout(notificationUnmountTimeout.current);
+
+    setNotificationMessage(message);
+    requestAnimationFrame(() => setIsNotificationVisible(true));
+
+    notificationHideTimeout.current = setTimeout(() => setIsNotificationVisible(false), 3000);
+    notificationUnmountTimeout.current = setTimeout(() => setNotificationMessage(null), 3300);
   };
 
   // Toggle playing music with vintage vinyl spin effect
@@ -232,7 +239,12 @@ export default function App() {
 
   // Copy invitation link
   const handleCopyInviteLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+    try {
+      navigator.clipboard.writeText(window.location.href);
+    } catch (err) {
+      // Clipboard access can be blocked by browser permissions; the UI still
+      // confirms the action below so the user isn't left without feedback.
+    }
     setIsCopiedLink(true);
     triggerNotification('Ссылка на приглашение скопирована! ✉️');
     setTimeout(() => {
@@ -294,11 +306,15 @@ export default function App() {
       {/* Texture Layer 4: Soft vignette shadow border overlay */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0%,rgba(140,111,86,0.12)_100%)] z-0" />
 
-      {/* Floating Notification Box */}
-      {showNotification && (
-        <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#3E352F] text-[#FAF7F2] text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2.5 animate-bounce border border-[#DDD0BC]/15 font-semibold">
+      {/* Floating Notification Box: quick smooth fade in, holds, then fades out */}
+      {notificationMessage && (
+        <div
+          className={`fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#3E352F] text-[#FAF7F2] text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2.5 border border-[#DDD0BC]/15 font-semibold transition-all duration-300 ease-out ${
+            isNotificationVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+          }`}
+        >
           <CheckCircle size={14} className="text-amber-400" />
-          <span>{showNotification}</span>
+          <span>{notificationMessage}</span>
         </div>
       )}
 
@@ -331,19 +347,19 @@ export default function App() {
               {isMusicPlaying ? <Volume2 size={13} className="animate-pulse" /> : <VolumeX size={13} />}
             </button>
 
-            {/* Share invitation link */}
+            {/* Copy invitation link */}
             <button
               onClick={handleCopyInviteLink}
               className="p-1.5 rounded-full border bg-white border-[#DDD0BC] text-[#6C5E53] hover:text-[#3E352F] transition-all cursor-pointer"
               title="Скопировать ссылку"
             >
-              <Share2 size={13} />
+              <Link2 size={13} />
             </button>
           </div>
         </div>
 
         {/* INVITATION CONTENT BODY */}
-        <div className="flex-1 pb-16 pt-3 relative text-center">
+        <div className="flex-1 pb-6.5 pt-3 relative text-center">
           
           {/* Retro Vinyl Widget */}
           <div className="px-5 pt-3 pb-2 text-center">
@@ -358,8 +374,8 @@ export default function App() {
                 <div className="absolute inset-1 rounded-full border border-dashed border-white/5" />
               </div>
               <div className="text-left flex-1 min-w-0">
-                <div className="text-[7px] font-extrabold uppercase tracking-widest text-[#8C6F56]">Свадебная ретро-музыка</div>
                 <div className="text-[11px] font-serif font-black text-[#3E352F] truncate">Isn't She Lovely</div>
+                <div className="text-[9px] font-sans font-semibold text-[#8C6F56] truncate">Stevie Wonder</div>
               </div>
               <button
                 onClick={handleToggleMusic}
