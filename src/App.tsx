@@ -187,16 +187,28 @@ export default function App() {
   // Preload the wedding song alongside the page preloader. `canplaythrough` means
   // the browser has buffered enough to play without stalling, so the real play
   // button starts instantly instead of waiting on the network.
+  //
+  // The file itself is fetched (not just linked) with referrerPolicy: 'no-referrer'
+  // and played from a local blob URL, because Yandex Disk's download endpoint
+  // returns 403 when a Referer header is present — which real browsers send by
+  // default on a direct <audio src> request to a cross-origin link.
   useEffect(() => {
     let cancelled = false;
     let audio: HTMLAudioElement | null = null;
+    let objectUrl: string | null = null;
     const handleReady = () => setIsPlayerReady(true);
 
     fetch(YANDEX_DOWNLOAD_API)
       .then((res) => res.json())
       .then((data: { href?: string }) => {
         if (cancelled || !data.href) return;
-        audio = new Audio(data.href);
+        return fetch(data.href, { referrerPolicy: 'no-referrer' });
+      })
+      .then((res) => (res && res.ok ? res.blob() : Promise.reject(new Error('Bad response fetching song file'))))
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        audio = new Audio(objectUrl);
         audio.loop = true;
         audio.volume = 0.35;
         audio.preload = 'auto';
@@ -214,6 +226,7 @@ export default function App() {
         audio.removeEventListener('canplaythrough', handleReady);
         audio.pause();
       }
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, []);
 
