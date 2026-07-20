@@ -26,16 +26,13 @@ import {
 
 const EXACT_GIF_URL = 'https://i.postimg.cc/sgHcKvGy/pasa-i-lera.gif';
 
-// Stevie Wonder — Isn't She Lovely (Official Audio), played via the YouTube IFrame API
-// so we stream from YouTube's licensed player instead of hosting the track ourselves.
-const WEDDING_SONG_YOUTUBE_ID = 'kHInwkOJm24';
-
-declare global {
-  interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady: () => void;
-  }
-}
+// Stevie Wonder — Isn't She Lovely, hosted on the couple's own Yandex Disk
+// instead of YouTube, which loaded unreliably for some guests depending on
+// their connection/region. Yandex's public API issues a short-lived signed
+// download link, so a fresh one is fetched on every page load rather than
+// hardcoding a URL that would eventually expire.
+const YANDEX_DISK_PUBLIC_KEY = 'https://disk.yandex.com/d/4-1lUIs42byA6g';
+const YANDEX_DOWNLOAD_API = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(YANDEX_DISK_PUBLIC_KEY)}`;
 
 /**
  * High-performance, lightweight Scroll Reveal Component using the native IntersectionObserver.
@@ -164,9 +161,7 @@ export default function App() {
   const notificationHideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notificationUnmountTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const playerRef = useRef<any>(null);
-  const playerInitStarted = useRef(false);
-  const hasPreBuffered = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   // Preloader: wait for the hero photo, the QR code, and the music player,
@@ -189,53 +184,37 @@ export default function App() {
     return () => clearTimeout(timeout);
   }, [isAppReady]);
 
-  // Load the YouTube IFrame API once and mount a hidden player for the wedding song.
-  // Guarded with a ref flag so StrictMode's double-invoked effect in dev doesn't
-  // create a second player against the same target node.
+  // Preload the wedding song alongside the page preloader. `canplaythrough` means
+  // the browser has buffered enough to play without stalling, so the real play
+  // button starts instantly instead of waiting on the network.
   useEffect(() => {
-    if (playerInitStarted.current) return;
-    playerInitStarted.current = true;
+    let cancelled = false;
+    let audio: HTMLAudioElement | null = null;
+    const handleReady = () => setIsPlayerReady(true);
 
-    const createPlayer = () => {
-      playerRef.current = new window.YT.Player('youtube-audio-player', {
-        videoId: WEDDING_SONG_YOUTUBE_ID,
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          disablekb: 1,
-          playlist: WEDDING_SONG_YOUTUBE_ID, // required by YT for looping a single video
-          loop: 1,
-        },
-        events: {
-          // Pre-buffer the track while the preloader is up: briefly play it muted so the
-          // browser fetches audio data, then pause. That way the real play button starts
-          // instantly instead of showing YouTube's usual buffering delay on first press.
-          onReady: (event: any) => {
-            event.target.mute();
-            event.target.playVideo();
-          },
-          onStateChange: (event: any) => {
-            if (event.data === window.YT.PlayerState.PLAYING && !hasPreBuffered.current) {
-              hasPreBuffered.current = true;
-              event.target.pauseVideo();
-              event.target.seekTo(0);
-              event.target.unMute();
-              event.target.setVolume(35);
-              setIsPlayerReady(true);
-            }
-          },
-        },
+    fetch(YANDEX_DOWNLOAD_API)
+      .then((res) => res.json())
+      .then((data: { href?: string }) => {
+        if (cancelled || !data.href) return;
+        audio = new Audio(data.href);
+        audio.loop = true;
+        audio.volume = 0.35;
+        audio.preload = 'auto';
+        audioRef.current = audio;
+        audio.addEventListener('canplaythrough', handleReady, { once: true });
+        audio.load();
+      })
+      .catch((err) => {
+        console.warn('Failed to load wedding song from Yandex Disk', err);
       });
-    };
 
-    if (window.YT && window.YT.Player) {
-      createPlayer();
-    } else {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      document.head.appendChild(tag);
-      window.onYouTubeIframeAPIReady = createPlayer;
-    }
+    return () => {
+      cancelled = true;
+      if (audio) {
+        audio.removeEventListener('canplaythrough', handleReady);
+        audio.pause();
+      }
+    };
   }, []);
 
   // Trigger a brief floating notification that fades in, holds, then fades out
@@ -252,12 +231,14 @@ export default function App() {
 
   // Toggle playing music with vintage vinyl spin effect
   const handleToggleMusic = () => {
-    if (!playerRef.current || !isPlayerReady) return;
+    if (!audioRef.current || !isPlayerReady) return;
 
     if (isMusicPlaying) {
-      playerRef.current.pauseVideo();
+      audioRef.current.pause();
     } else {
-      playerRef.current.playVideo();
+      audioRef.current.play().catch((err) => {
+        console.warn('Playback prevented by browser user activation policy', err);
+      });
     }
     setIsMusicPlaying(!isMusicPlaying);
   };
@@ -296,9 +277,6 @@ export default function App() {
 
   return (
     <div id="wedding-app" className="min-h-screen bg-[#EFE8DC] font-sans text-[#3E352F] flex flex-col items-center justify-start overflow-x-hidden relative selection:bg-[#E2D2BC] py-4 md:py-10">
-
-      {/* Hidden YouTube player powering the background wedding song */}
-      <div id="youtube-audio-player" className="absolute w-px h-px -left-full overflow-hidden opacity-0 pointer-events-none" aria-hidden="true" />
 
       {/* Full-page preloader shown until the hero photo, QR code and music player are ready */}
       {showPreloader && (
