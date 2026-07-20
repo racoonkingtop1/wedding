@@ -3,7 +3,7 @@ import { WeddingConfig } from './types';
 export const INITIAL_WEDDING_CONFIG: WeddingConfig = {
   husbandName: 'Павел',
   wifeName: 'Валерия',
-  date: '2026-08-20T12:30:00',
+  date: '2026-08-20T12:30:00+03:00',
   introImage: 'https://i.postimg.cc/sgHcKvGy/pasa-i-lera.gif',
   welcomeText: 'Дорогой друг! Мы решили стать семьёй и хотим пригласить тебя разделить с нами этот праздник. Свадьба состоится 20 августа 2026 года. И регистрация, и свадебная речь будут транслироваться в Zoom. Нам важно, чтобы несмотря на расстояние у тебя получилось поприсутствовать на мероприятии. Для нас это лучший подарок.',
   schedule: [
