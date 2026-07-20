@@ -26,6 +26,17 @@ import {
 
 const EXACT_GIF_URL = 'https://i.postimg.cc/sgHcKvGy/pasa-i-lera.gif';
 
+// Stevie Wonder — Isn't She Lovely (Official Audio), played via the YouTube IFrame API
+// so we stream from YouTube's licensed player instead of hosting the track ourselves.
+const WEDDING_SONG_YOUTUBE_ID = 'kHInwkOJm24';
+
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
 /**
  * High-performance, lightweight Scroll Reveal Component using the native IntersectionObserver.
  * Fades and slides elements up elegantly as they enter the viewport.
@@ -78,7 +89,45 @@ export default function App() {
   const [showNotification, setShowNotification] = useState<string | null>(null);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playerRef = useRef<any>(null);
+  const playerInitStarted = useRef(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+
+  // Load the YouTube IFrame API once and mount a hidden player for the wedding song.
+  // Guarded with a ref flag so StrictMode's double-invoked effect in dev doesn't
+  // create a second player against the same target node.
+  useEffect(() => {
+    if (playerInitStarted.current) return;
+    playerInitStarted.current = true;
+
+    const createPlayer = () => {
+      playerRef.current = new window.YT.Player('youtube-audio-player', {
+        videoId: WEDDING_SONG_YOUTUBE_ID,
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          disablekb: 1,
+          playlist: WEDDING_SONG_YOUTUBE_ID, // required by YT for looping a single video
+          loop: 1,
+        },
+        events: {
+          onReady: (event: any) => {
+            event.target.setVolume(35);
+            setIsPlayerReady(true);
+          },
+        },
+      });
+    };
+
+    if (window.YT && window.YT.Player) {
+      createPlayer();
+    } else {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+      window.onYouTubeIframeAPIReady = createPlayer;
+    }
+  }, []);
 
   // Trigger brief floating notifications
   const triggerNotification = (message: string) => {
@@ -90,19 +139,12 @@ export default function App() {
 
   // Toggle playing music with vintage vinyl spin effect
   const handleToggleMusic = () => {
-    if (!audioRef.current) {
-      // Custom wedding track chosen by user
-      audioRef.current = new Audio('https://s33.aconvert.com/convert/p3r68-cdx67/cp0d1-i5568.mp3');
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0.35;
-    }
+    if (!playerRef.current || !isPlayerReady) return;
 
     if (isMusicPlaying) {
-      audioRef.current.pause();
+      playerRef.current.pauseVideo();
     } else {
-      audioRef.current.play().catch(err => {
-        console.warn('Playback prevented by browser user activation policy', err);
-      });
+      playerRef.current.playVideo();
     }
     setIsMusicPlaying(!isMusicPlaying);
   };
@@ -136,7 +178,10 @@ export default function App() {
 
   return (
     <div id="wedding-app" className="min-h-screen bg-[#EFE8DC] font-sans text-[#3E352F] flex flex-col items-center justify-start overflow-x-hidden relative selection:bg-[#E2D2BC] py-4 md:py-10">
-      
+
+      {/* Hidden YouTube player powering the background wedding song */}
+      <div id="youtube-audio-player" className="absolute w-px h-px -left-full overflow-hidden opacity-0 pointer-events-none" aria-hidden="true" />
+
       {/* 📜 RICH MULTI-LAYER VINTAGE PAPER & NOISE TEXTURES */}
       {/* Texture Layer 1: Cozy fine geometric grain */}
       <div className="absolute inset-0 opacity-[0.035] pointer-events-none bg-[radial-gradient(#3E352F_1.2px,transparent_1.2px)] [background-size:20px_20px] z-0" />
