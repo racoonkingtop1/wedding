@@ -128,6 +128,31 @@ function HandwrittenText({ text, className }: { text: string; className?: string
   );
 }
 
+/**
+ * Thin decorative zigzag stripe used to fill the side gutters left by the
+ * narrower hero blocks (music widget, date stamp) versus the wider card.
+ * Hidden entirely below the `sm` breakpoint so mobile is unaffected, then
+ * eases in across sm/md/lg as there's more room for it to breathe.
+ */
+function ZigzagStripe({ side }: { side: 'left' | 'right' }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`hidden sm:block absolute top-3 bottom-3 w-2.5 opacity-40 md:opacity-70 lg:opacity-100 transition-opacity duration-500 pointer-events-none ${
+        side === 'left' ? 'left-1' : 'right-1'
+      }`}
+      style={{
+        backgroundImage:
+          'linear-gradient(135deg, #8C6F56 25%, transparent 25%), linear-gradient(225deg, #8C6F56 25%, transparent 25%)',
+        backgroundSize: '10px 10px',
+        backgroundPosition: '0 0, 5px 0',
+        maskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)',
+        WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)',
+      }}
+    />
+  );
+}
+
 export default function App() {
   const config = INITIAL_WEDDING_CONFIG;
   const theme = THEMES.retro;
@@ -361,6 +386,11 @@ export default function App() {
         {/* INVITATION CONTENT BODY */}
         <div className="flex-1 pb-6.5 pt-3 relative text-center">
           
+          {/* Decorative side zigzag stripes framing the hero area (music widget through the date stamp) */}
+          <div className="relative">
+          <ZigzagStripe side="left" />
+          <ZigzagStripe side="right" />
+
           {/* Retro Vinyl Widget */}
           <div className="px-5 pt-3 pb-2 text-center">
             <div className="max-w-xs mx-auto bg-[#F4EEE1] border border-[#DDD0BC] p-2 rounded-2xl flex items-center gap-3 shadow-sm relative overflow-hidden">
@@ -432,6 +462,7 @@ export default function App() {
                 Четверг, 20 августа 2026 года
               </div>
             </div>
+          </div>
           </div>
 
           {/* 2. COUNTDOWN PANEL */}
