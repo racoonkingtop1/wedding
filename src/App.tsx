@@ -246,7 +246,7 @@ export default function App() {
       // confirms the action below so the user isn't left without feedback.
     }
     setIsCopiedLink(true);
-    triggerNotification('Ссылка на приглашение скопирована! ✉️');
+    triggerNotification('Ссылка на приглашение скопирована!');
     setTimeout(() => {
       setIsCopiedLink(false);
     }, 3000);
@@ -309,11 +309,11 @@ export default function App() {
       {/* Floating Notification Box: quick smooth fade in, holds, then fades out */}
       {notificationMessage && (
         <div
-          className={`fixed top-5 left-1/2 transform -translate-x-1/2 z-50 bg-[#3E352F] text-[#FAF7F2] text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2.5 border border-[#DDD0BC]/15 font-semibold transition-all duration-300 ease-out ${
+          className={`fixed top-5 left-1/2 transform -translate-x-1/2 z-50 max-w-xs w-max bg-[#3E352F] text-[#FAF7F2] text-xs px-5 py-3 rounded-full shadow-2xl flex items-center gap-2.5 border border-[#DDD0BC]/15 font-semibold transition-all duration-300 ease-out ${
             isNotificationVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
           }`}
         >
-          <CheckCircle size={14} className="text-amber-400" />
+          <CheckCircle className="w-4 h-4 shrink-0 text-amber-400" />
           <span>{notificationMessage}</span>
         </div>
       )}
@@ -401,7 +401,7 @@ export default function App() {
             {/* Couple names heading */}
             <h1 className="font-serif text-3xl font-black text-[#3E352F] tracking-wide mb-5">
               <span className="block italic text-4xl leading-tight text-[#8C6F56]">Валерия</span>
-              <span className="block text-[11px] font-sans font-extrabold tracking-widest my-1 text-amber-900/40">— И —</span>
+              <span className="block text-[11px] font-sans font-extrabold tracking-widest mt-1 mb-0.5 text-amber-900/40">— И —</span>
               <span className="block italic text-4xl leading-tight text-[#8C6F56]">Павел</span>
             </h1>
 
@@ -596,7 +596,7 @@ export default function App() {
               </div>
               
               <p className="text-[11px] text-[#6C5E53] leading-relaxed font-medium">
-                Лучший подарок — твоё присутствие и при желании финансовый вклад в наше свадебное путешествие. Лучше не дарить живые цветы 🤍
+                Лучший подарок — твоё присутствие и при желании финансовый вклад в наше свадебное путешествие. А ещё лучше не дарить живые цветы 🤍
               </p>
             </div>
           </ScrollReveal>
