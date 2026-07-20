@@ -71,12 +71,59 @@ function ScrollReveal({ children }: { children: ReactNode }) {
     <div
       ref={ref}
       className={`transition-all duration-[1000ms] ease-out transform ${
-        isVisible 
-          ? 'opacity-100 translate-y-0 scale-100' 
+        isVisible
+          ? 'opacity-100 translate-y-0 scale-100'
           : 'opacity-0 translate-y-10 scale-[0.98]'
       }`}
     >
       {children}
+    </div>
+  );
+}
+
+/**
+ * Reveals text one character at a time, like it's being written by hand,
+ * starting once the element scrolls into view. Ends with a soft blinking caret.
+ */
+function HandwrittenText({ text, className }: { text: string; className?: string }) {
+  const [visibleChars, setVisibleChars] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasStarted(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!hasStarted || visibleChars >= text.length) return;
+    const timeout = setTimeout(() => setVisibleChars((count) => count + 1), 55);
+    return () => clearTimeout(timeout);
+  }, [hasStarted, visibleChars, text]);
+
+  const isDone = visibleChars >= text.length;
+
+  return (
+    <div ref={ref} className={className}>
+      {text.slice(0, visibleChars)}
+      <span
+        className={`inline-block w-[2px] h-[0.9em] align-middle ml-0.5 bg-current ${
+          isDone ? 'opacity-0' : 'animate-pulse'
+        }`}
+      />
     </div>
   );
 }
@@ -91,6 +138,7 @@ export default function App() {
 
   const playerRef = useRef<any>(null);
   const playerInitStarted = useRef(false);
+  const hasPreBuffered = useRef(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   // Preloader: wait for the hero photo, the QR code, and the music player,
@@ -131,9 +179,22 @@ export default function App() {
           loop: 1,
         },
         events: {
+          // Pre-buffer the track while the preloader is up: briefly play it muted so the
+          // browser fetches audio data, then pause. That way the real play button starts
+          // instantly instead of showing YouTube's usual buffering delay on first press.
           onReady: (event: any) => {
-            event.target.setVolume(35);
-            setIsPlayerReady(true);
+            event.target.mute();
+            event.target.playVideo();
+          },
+          onStateChange: (event: any) => {
+            if (event.data === window.YT.PlayerState.PLAYING && !hasPreBuffered.current) {
+              hasPreBuffered.current = true;
+              event.target.pauseVideo();
+              event.target.seekTo(0);
+              event.target.unMute();
+              event.target.setVolume(35);
+              setIsPlayerReady(true);
+            }
           },
         },
       });
@@ -380,10 +441,11 @@ export default function App() {
                 Мы решили стать семьёй и хотим пригласить тебя разделить с нами этот праздник. Свадьба состоится 20 августа 2026 года. И регистрация, и свадебная речь будут транслироваться в Zoom. Нам важно, чтобы несмотря на расстояние у тебя получилось поприсутствовать на мероприятии. Для нас это лучший подарок.
               </p>
               
-              {/* Warm signature closing line */}
-              <div className="text-center mt-5 font-script text-2xl text-[#8C6F56] animate-pulse">
-                Будем счастливы видеть твою улыбку :)
-              </div>
+              {/* Warm signature closing line, revealed as if handwritten */}
+              <HandwrittenText
+                text="Будем счастливы видеть твою улыбку :)"
+                className="text-center mt-5 font-script text-2xl text-[#8C6F56]"
+              />
             </div>
           </ScrollReveal>
 
@@ -391,7 +453,7 @@ export default function App() {
           <div className="mx-4.5 my-6.5 space-y-4">
             <ScrollReveal>
               <div className="text-center">
-                <h3 className="font-serif text-2xl font-black text-[#8C6F56] italic">Тайминг Свадьбы</h3>
+                <h3 className="font-serif text-2xl font-black text-[#8C6F56] italic">Тайминг свадьбы</h3>
                 <p className="text-[9px] text-[#6C5E53] uppercase tracking-wider font-extrabold font-sans">Программа праздничного дня</p>
               </div>
             </ScrollReveal>
@@ -481,11 +543,11 @@ export default function App() {
             <div className="mx-4.5 my-6.5 p-5.5 bg-[#FAF7F2] border border-[#DDD0BC] rounded-3xl text-center space-y-3.5 shadow-sm">
               <div className="flex items-center justify-center gap-2 text-[#8C6F56] mb-0.5">
                 <Shirt size={18} />
-                <h3 className="font-serif text-2xl font-black italic">Дресс-Код</h3>
+                <h3 className="font-serif text-2xl font-black italic">Дресс-код</h3>
               </div>
-              
+
               <p className="text-[11px] text-[#6C5E53] leading-relaxed font-medium px-1">
-                Особого дресс-кода нет, единственное что нужно — иметь на себе любую <span className="font-bold text-[#3E352F]">чёрную</span> или <span className="font-bold text-sky-600">голубую</span> вещь или аксессуар.
+                Строгого дресс-кода нет, единственное что нужно — иметь на себе любую <span className="font-bold text-[#3E352F]">чёрную</span> или <span className="font-bold text-sky-600">голубую</span> вещь или аксессуар.
               </p>
 
               {/* Custom display of color options */}
@@ -527,7 +589,7 @@ export default function App() {
           <ScrollReveal>
             <div className="mx-4.5 my-6.5 p-5.5 bg-[#FAF7F2] border border-[#DDD0BC] rounded-3xl text-center shadow-md border-t-2 border-t-[#8C6F56]">
               <div className="border-b border-dashed border-[#DDD0BC] pb-2 mb-4">
-                <h3 className="font-serif text-2xl font-black text-[#8C6F56] italic">Свадебный Канал</h3>
+                <h3 className="font-serif text-2xl font-black text-[#8C6F56] italic">Свадебный канал</h3>
                 <span className="text-[8px] font-mono tracking-widest text-[#6C5E53] uppercase font-bold">Подтверждение участия</span>
               </div>
               
@@ -562,7 +624,7 @@ export default function App() {
           </ScrollReveal>
 
           {/* Core watermark credit */}
-          <div className="py-6 text-center text-[9px] text-stone-400 font-serif italic">
+          <div className="py-3 text-center text-[11px] text-stone-400 font-serif italic">
             Валерия & Павел • Сохраним этот день вместе • 2026
           </div>
 
