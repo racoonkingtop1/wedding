@@ -4,9 +4,12 @@ import { ThemeConfig } from '../types';
 interface CountdownTimerProps {
   targetDate: string;
   theme: ThemeConfig;
+  labels: { days: string; hours: string; minutes: string; seconds: string };
+  expiredTitle: string;
+  expiredSubtitle: string;
 }
 
-export default function CountdownTimer({ targetDate, theme }: CountdownTimerProps) {
+export default function CountdownTimer({ targetDate, theme, labels, expiredTitle, expiredSubtitle }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -43,20 +46,20 @@ export default function CountdownTimer({ targetDate, theme }: CountdownTimerProp
     return (
       <div className={`text-center py-6 px-4 rounded-xl ${theme.cardBgClass} border border-opacity-10 backdrop-blur-md`}>
         <h3 className={`text-2xl font-semibold mb-2 ${theme.textPrimaryClass}`}>
-          🎉 Этот счастливый день настал!
+          {expiredTitle}
         </h3>
         <p className={`${theme.textSecondaryClass}`}>
-          Молодожены уже создают свою новую счастливую главу жизни.
+          {expiredSubtitle}
         </p>
       </div>
     );
   }
 
   const timeUnits = [
-    { value: timeLeft.days, label: 'дней', labelEn: 'days' },
-    { value: timeLeft.hours, label: 'часов', labelEn: 'hours' },
-    { value: timeLeft.minutes, label: 'минут', labelEn: 'minutes' },
-    { value: timeLeft.seconds, label: 'секунд', labelEn: 'seconds' }
+    { value: timeLeft.days, label: labels.days },
+    { value: timeLeft.hours, label: labels.hours },
+    { value: timeLeft.minutes, label: labels.minutes },
+    { value: timeLeft.seconds, label: labels.seconds }
   ];
 
   return (

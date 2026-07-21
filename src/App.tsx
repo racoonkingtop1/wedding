@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef, ReactNode } from 'react';
 import { THEMES } from './themes';
 import { INITIAL_WEDDING_CONFIG } from './initialData';
+import { translations, Language } from './translations';
 
 // Sub-components
 import CountdownTimer from './components/CountdownTimer';
 import WeddingSchedule from './components/WeddingSchedule';
 
 // Icons
-import { 
-  Heart, 
-  MapPin, 
+import {
+  Heart,
+  MapPin,
   Volume2,
   VolumeX,
   Music,
@@ -154,6 +155,9 @@ export default function App() {
   const config = INITIAL_WEDDING_CONFIG;
   const theme = THEMES.retro;
 
+  const [language, setLanguage] = useState<Language>('ru');
+  const t = translations[language];
+
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState<string | null>(null);
   const [isNotificationVisible, setIsNotificationVisible] = useState(false);
@@ -265,24 +269,25 @@ export default function App() {
       // confirms the action below so the user isn't left without feedback.
     }
     setIsCopiedLink(true);
-    triggerNotification('Ссылка на приглашение скопирована!');
+    triggerNotification(t.linkCopied);
     setTimeout(() => {
       setIsCopiedLink(false);
     }, 3000);
   };
 
-  // Format date helper for Russia
+  // Format the wedding date in the currently selected language's locale
   const getFormattedDate = (isoString: string) => {
     try {
       const dateObj = new Date(isoString);
-      return dateObj.toLocaleDateString('ru-RU', {
+      const formatted = dateObj.toLocaleDateString(t.locale, {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
         weekday: 'long'
       });
+      return formatted.charAt(0).toUpperCase() + formatted.slice(1);
     } catch (e) {
-      return 'Четверг, 20 августа 2026 года';
+      return language === 'ru' ? 'Четверг, 20 августа 2026 года' : 'Thursday, August 20, 2026';
     }
   };
 
@@ -304,7 +309,7 @@ export default function App() {
             <Heart size={16} className="absolute inset-0 m-auto fill-[#8C6F56] text-[#8C6F56] animate-pulse" />
           </div>
           <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#8C6F56] font-sans">
-            Загрузка приглашения…
+            {t.loading}
           </span>
         </div>
       )}
@@ -345,20 +350,29 @@ export default function App() {
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
             <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#8C6F56] font-mono">
-              Онлайн-Приглашение
+              {t.onlineInvitation}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Language toggle */}
+            <button
+              onClick={() => setLanguage(language === 'ru' ? 'en' : 'ru')}
+              className="px-2 h-[26px] rounded-full border bg-white border-[#DDD0BC] text-[#6C5E53] hover:text-[#3E352F] transition-all cursor-pointer text-[10px] font-black uppercase tracking-wider"
+              title={t.switchLanguage}
+            >
+              {language === 'ru' ? 'EN' : 'RU'}
+            </button>
+
             {/* Play/Pause background track */}
             <button
               onClick={handleToggleMusic}
               className={`p-1.5 rounded-full border transition-all cursor-pointer ${
-                isMusicPlaying 
+                isMusicPlaying
                   ? 'bg-[#8C6F56] border-[#8C6F56] text-white shadow-sm'
                   : 'bg-white border-[#DDD0BC] text-[#6C5E53] hover:text-[#3E352F]'
               }`}
-              title={isMusicPlaying ? 'Выключить музыку' : 'Включить ретро-музыку'}
+              title={isMusicPlaying ? t.turnMusicOff : t.turnMusicOn}
             >
               {isMusicPlaying ? <Volume2 size={13} className="animate-pulse" /> : <VolumeX size={13} />}
             </button>
@@ -367,7 +381,7 @@ export default function App() {
             <button
               onClick={handleCopyInviteLink}
               className="p-1.5 rounded-full border bg-white border-[#DDD0BC] text-[#6C5E53] hover:text-[#3E352F] transition-all cursor-pointer"
-              title="Скопировать ссылку"
+              title={t.copyLink}
             >
               <Link2 size={13} />
             </button>
@@ -395,8 +409,8 @@ export default function App() {
                 <div className="absolute inset-1 rounded-full border border-dashed border-white/5" />
               </div>
               <div className="text-left flex-1 min-w-0">
-                <div className="text-[11px] font-serif font-black text-[#3E352F] truncate">Isn't She Lovely</div>
-                <div className="text-[9px] font-sans font-semibold text-[#8C6F56] truncate">Stevie Wonder</div>
+                <div className="text-[11px] font-serif font-black text-[#3E352F] truncate">{t.songTitle}</div>
+                <div className="text-[9px] font-sans font-semibold text-[#8C6F56] truncate">{t.songArtist}</div>
               </div>
               <button
                 onClick={handleToggleMusic}
@@ -414,16 +428,16 @@ export default function App() {
             <div className="mb-4 text-[#8C6F56] flex items-center gap-1.5 justify-center">
               <Heart size={13} className="fill-[#8C6F56]" />
               <span className="text-[10px] font-extrabold tracking-widest uppercase font-sans">
-                Свадебное Приглашение
+                {t.weddingInvitation}
               </span>
               <Heart size={13} className="fill-[#8C6F56]" />
             </div>
 
             {/* Couple names heading */}
             <h1 className="font-serif text-3xl font-black text-[#3E352F] tracking-wide mb-5">
-              <span className="block italic text-4xl leading-tight text-[#8C6F56]">Валерия</span>
-              <span className="block text-[11px] font-sans font-extrabold tracking-widest mt-1 mb-0.5 text-amber-900/40">— И —</span>
-              <span className="block italic text-4xl leading-tight text-[#8C6F56]">Павел</span>
+              <span className="block italic text-4xl leading-tight text-[#8C6F56]">{t.brideName}</span>
+              <span className="block text-[11px] font-sans font-extrabold tracking-widest mt-1 mb-0.5 text-amber-900/40">{t.andSeparator}</span>
+              <span className="block italic text-4xl leading-tight text-[#8C6F56]">{t.groomName}</span>
             </h1>
 
             {/* 📸 MANDATORY RETRO POLAROID WITH THE EXACT REQUIRED GIF */}
@@ -431,7 +445,7 @@ export default function App() {
               <div className="w-full aspect-square bg-stone-100 rounded-sm overflow-hidden border border-stone-200 relative">
                 <img
                   src={EXACT_GIF_URL}
-                  alt="Валерия и Павел"
+                  alt={t.heroPhotoAlt}
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                   onLoad={() => setIsHeroImageLoaded(true)}
@@ -442,15 +456,15 @@ export default function App() {
               </div>
               {/* Polaroid handwritten caption in Marck Script */}
               <div className="text-center pt-3 font-script text-xl text-[#5A4535] italic select-none">
-                Счастливы вместе 🤍
+                {t.polaroidCaption}
               </div>
             </div>
 
             {/* Wedding Date stamp */}
             <div className="border-t border-b border-dashed border-[#DDD0BC] py-2.5 px-6 max-w-xs mx-auto">
-              <div className="text-[9px] font-extrabold uppercase tracking-widest text-amber-900/70 mb-0.5 font-sans">ДАТА ТОРЖЕСТВА</div>
+              <div className="text-[9px] font-extrabold uppercase tracking-widest text-amber-900/70 mb-0.5 font-sans">{t.weddingDateLabel}</div>
               <div className="font-serif font-black text-[15px] text-[#3E352F] italic tracking-tight uppercase leading-none">
-                Четверг, 20 августа 2026 года
+                {formattedWeddingDate}
               </div>
             </div>
           </div>
@@ -460,9 +474,15 @@ export default function App() {
           <ScrollReveal>
             <div className="px-5 py-5 bg-[#F3EAE0]/60 border-t border-b border-dashed border-[#D2C5B3] text-center">
               <span className="text-[9px] font-extrabold tracking-widest uppercase text-[#8C6F56] mb-2.5 block font-sans">
-                До счастливого события осталось:
+                {t.countdownLabel}
               </span>
-              <CountdownTimer targetDate={config.date} theme={theme} />
+              <CountdownTimer
+                targetDate={config.date}
+                theme={theme}
+                labels={t.countdown}
+                expiredTitle={t.countdownExpiredTitle}
+                expiredSubtitle={t.countdownExpiredSubtitle}
+              />
             </div>
           </ScrollReveal>
 
@@ -473,17 +493,19 @@ export default function App() {
               <div className="absolute top-4.5 right-4.5 w-8 h-8 border border-[#8C6F56] rounded-md flex items-center justify-center text-[8px] font-serif font-bold text-[#8C6F56] opacity-75 rotate-12 select-none">
                 LOVE
               </div>
-              
-              <h3 className="font-serif italic text-2xl text-[#8C6F56] font-black mb-3 text-center">Дорогой друг!</h3>
+
+              <h3 className="font-serif italic text-2xl text-[#8C6F56] font-black mb-3 text-center">{t.dearFriend}</h3>
               <p className="text-xs text-[#4E433C] leading-relaxed font-sans italic text-left indent-4 space-y-1.5">
-                Мы решили стать семьёй и хотим пригласить тебя разделить с нами этот праздник. Свадьба состоится 20 августа 2026 года. И регистрация, и свадебная речь будут транслироваться в Zoom. Нам важно, чтобы несмотря на расстояние у тебя получилось поприсутствовать на мероприятии. Для нас это лучший подарок.
+                {t.welcomeText}
               </p>
-              
+
               {/* Warm signature closing line, revealed as if handwritten */}
-              <HandwrittenText
-                text="Будем счастливы видеть твою улыбку :)"
-                className="text-center mt-5 font-script text-2xl text-[#8C6F56]"
-              />
+              <React.Fragment key={language}>
+                <HandwrittenText
+                  text={t.handwrittenLine}
+                  className="text-center mt-5 font-script text-2xl text-[#8C6F56]"
+                />
+              </React.Fragment>
             </div>
           </ScrollReveal>
 
@@ -491,8 +513,8 @@ export default function App() {
           <div className="mx-4.5 my-6.5 space-y-4">
             <ScrollReveal>
               <div className="text-center">
-                <h3 className="font-serif text-2xl font-black text-[#8C6F56] italic">Тайминг свадьбы</h3>
-                <p className="text-[9px] text-[#6C5E53] uppercase tracking-wider font-extrabold font-sans">Программа праздничного дня</p>
+                <h3 className="font-serif text-2xl font-black text-[#8C6F56] italic">{t.timingTitle}</h3>
+                <p className="text-[9px] text-[#6C5E53] uppercase tracking-wider font-extrabold font-sans">{t.timingSubtitle}</p>
               </div>
             </ScrollReveal>
 
@@ -501,22 +523,22 @@ export default function App() {
               <ScrollReveal>
                 <div className="p-4.5 bg-[#FAF7F2] border border-[#DDD0BC] rounded-2xl text-left space-y-2.5 shadow-sm relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-[#8C6F56]/10 to-transparent rounded-bl-full pointer-events-none" />
-                  
+
                   <div className="flex items-center gap-2">
                     <span className="p-1.5 bg-[#8C6F56]/10 text-[#8C6F56] rounded-lg">
                       <Calendar size={14} />
                     </span>
                     <div>
-                      <div className="text-[8px] font-extrabold uppercase text-[#8C6F56] tracking-widest font-sans">РЕГИСТРАЦИЯ БРАКА — 12:30 (МСК)</div>
-                      <h4 className="font-serif font-black text-xs text-[#3E352F] uppercase">ЗАГС г. Верхняя Пышма</h4>
+                      <div className="text-[8px] font-extrabold uppercase text-[#8C6F56] tracking-widest font-sans">{t.registrationLabel}</div>
+                      <h4 className="font-serif font-black text-xs text-[#3E352F] uppercase">{t.registrationVenue}</h4>
                     </div>
                   </div>
-                  
+
                   <p className="text-[11px] text-[#6C5E53] leading-relaxed font-medium">
-                    <strong>Адрес ЗАГСа:</strong> город Верхняя Пышма, улица Юбилейная 15а.
+                    <strong>{t.registrationAddressLabel}</strong> {t.registrationAddress}
                   </p>
                   <p className="text-[11px] text-[#6C5E53] italic bg-amber-50/50 p-2 rounded-lg border border-dashed border-amber-200">
-                    Если ты захочешь поприсутствовать в ЗАГСе вживую — пожалуйста, напиши нам в мессенджере.
+                    {t.registrationNote}
                   </p>
 
                   <div className="flex gap-2 pt-1">
@@ -526,7 +548,7 @@ export default function App() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-[9px] font-bold text-[#8C6F56] bg-white border border-[#DDD0BC] rounded-lg px-2.5 py-1 uppercase tracking-wider hover:bg-[#FAF7F2] shadow-xs cursor-pointer"
                     >
-                      <MapPin size={10} /> Яндекс Карты
+                      <MapPin size={10} /> {t.yandexMaps}
                     </a>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("город Верхняя Пышма, улица Юбилейная 15а")}`}
@@ -534,7 +556,7 @@ export default function App() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-[9px] font-bold text-[#6C5E53] bg-white border border-[#DDD0BC] rounded-lg px-2.5 py-1 uppercase tracking-wider hover:bg-[#FAF7F2] shadow-xs cursor-pointer"
                     >
-                      Google Maps
+                      {t.googleMaps}
                     </a>
                   </div>
                 </div>
@@ -544,19 +566,19 @@ export default function App() {
               <ScrollReveal>
                 <div className="p-4.5 bg-[#FAF7F2] border border-[#DDD0BC] rounded-2xl text-left space-y-2 shadow-sm relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-sky-500/10 to-transparent rounded-bl-full pointer-events-none" />
-                  
+
                   <div className="flex items-center gap-2">
                     <span className="p-1.5 bg-[#8C6F56]/10 text-[#8C6F56] rounded-lg">
                       <Video size={14} />
                     </span>
                     <div>
-                      <div className="text-[8px] font-extrabold uppercase text-[#8C6F56] tracking-widest font-sans">ТОРЖЕСТВЕННАЯ РЕЧЬ — 15:00 (МСК)</div>
-                      <h4 className="font-serif font-black text-xs text-[#3E352F] uppercase">Прямая трансляция в Zoom</h4>
+                      <div className="text-[8px] font-extrabold uppercase text-[#8C6F56] tracking-widest font-sans">{t.speechLabel}</div>
+                      <h4 className="font-serif font-black text-xs text-[#3E352F] uppercase">{t.speechVenue}</h4>
                     </div>
                   </div>
-                  
+
                   <p className="text-[11px] text-[#6C5E53] leading-relaxed">
-                    Торжественная речь будет произнесена в 15:00 по Московскому времени для всех гостей, кто подключится онлайн.
+                    {t.speechText}
                   </p>
                 </div>
               </ScrollReveal>
@@ -566,10 +588,10 @@ export default function App() {
                 <div className="p-4 bg-gradient-to-r from-[#F5EEE1] to-[#FAF7F2] border border-[#DDD0BC] rounded-2xl text-left space-y-1 shadow-xs">
                   <div className="flex items-center gap-1.5 text-[#8C6F56] mb-1">
                     <Sparkles size={13} className="animate-spin-slow" />
-                    <span className="text-[8px] font-black uppercase tracking-widest font-sans">ИНФОРМАЦИЯ О КАНАЛЕ</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest font-sans">{t.channelInfoLabel}</span>
                   </div>
                   <p className="text-[11px] text-[#4E433C] leading-normal font-sans italic">
-                    Данные о Zoom-конференции будут отправлены в наш канал незадолго до свадьбы. Сохраните эту страницу!
+                    {t.channelInfoText}
                   </p>
                 </div>
               </ScrollReveal>
@@ -581,11 +603,11 @@ export default function App() {
             <div className="mx-4.5 my-6.5 p-5.5 bg-[#FAF7F2] border border-[#DDD0BC] rounded-3xl text-center space-y-3.5 shadow-sm">
               <div className="flex items-center justify-center gap-2 text-[#8C6F56] mb-0.5">
                 <Shirt size={18} />
-                <h3 className="font-serif text-2xl font-black italic">Дресс-код</h3>
+                <h3 className="font-serif text-2xl font-black italic">{t.dressCodeTitle}</h3>
               </div>
 
               <p className="text-[11px] text-[#6C5E53] leading-relaxed font-medium px-1">
-                Строгого дресс-кода нет, единственное что нужно — иметь на себе любую <span className="font-bold text-[#3E352F]">чёрную</span> или <span className="font-bold text-sky-600">голубую</span> вещь или аксессуар.
+                {t.dressCodeTextBefore} <span className="font-bold text-[#3E352F]">{t.dressCodeBlack}</span> {t.dressCodeOr} <span className="font-bold text-sky-600">{t.dressCodeBlue}</span>{t.dressCodeTextAfter}
               </p>
 
               {/* Custom display of color options */}
@@ -595,7 +617,7 @@ export default function App() {
                   <div className="w-11 h-11 rounded-full border border-stone-400 bg-black shadow-md flex items-center justify-center transition-transform hover:scale-105">
                     <div className="w-2 h-2 rounded-full bg-white opacity-25" />
                   </div>
-                  <span className="text-[8px] font-mono font-bold uppercase text-stone-500">Black / Чёрный</span>
+                  <span className="text-[8px] font-mono font-bold uppercase text-stone-500">{t.dressCodeBlackSwatch}</span>
                 </div>
 
                 {/* Sky Blue block */}
@@ -603,7 +625,7 @@ export default function App() {
                   <div className="w-11 h-11 rounded-full border border-stone-300 bg-[#A0C4FF] shadow-md flex items-center justify-center transition-transform hover:scale-105">
                     <div className="w-2 h-2 rounded-full bg-white opacity-30" />
                   </div>
-                  <span className="text-[8px] font-mono font-bold uppercase text-stone-500">Blue / Голубой</span>
+                  <span className="text-[8px] font-mono font-bold uppercase text-stone-500">{t.dressCodeBlueSwatch}</span>
                 </div>
               </div>
             </div>
@@ -614,11 +636,11 @@ export default function App() {
             <div className="mx-4.5 my-6.5 p-5.5 bg-[#FAF7F2] border border-[#DDD0BC] rounded-3xl text-center space-y-3 shadow-sm">
               <div className="flex items-center justify-center gap-2 text-[#8C6F56] mb-0.5">
                 <Gift size={18} />
-                <h3 className="font-serif text-2xl font-black italic">Про подарки</h3>
+                <h3 className="font-serif text-2xl font-black italic">{t.giftsTitle}</h3>
               </div>
-              
+
               <p className="text-[11px] text-[#6C5E53] leading-relaxed font-medium">
-                Лучший подарок — твоё присутствие и при желании финансовый вклад в наше свадебное путешествие. А ещё лучше не дарить живые цветы 🤍
+                {t.giftsText}
               </p>
             </div>
           </ScrollReveal>
@@ -627,18 +649,18 @@ export default function App() {
           <ScrollReveal>
             <div className="mx-4.5 my-6.5 p-5.5 bg-[#FAF7F2] border border-[#DDD0BC] rounded-3xl text-center shadow-md border-t-2 border-t-[#8C6F56]">
               <div className="border-b border-dashed border-[#DDD0BC] pb-2 mb-4">
-                <h3 className="font-serif text-2xl font-black text-[#8C6F56] italic">Свадебный канал</h3>
-                <span className="text-[8px] font-mono tracking-widest text-[#6C5E53] uppercase font-bold">Подтверждение участия</span>
+                <h3 className="font-serif text-2xl font-black text-[#8C6F56] italic">{t.channelTitle}</h3>
+                <span className="text-[8px] font-mono tracking-widest text-[#6C5E53] uppercase font-bold">{t.channelSubtitle}</span>
               </div>
-              
+
               <p className="text-xs text-[#4E433C] leading-relaxed mb-5 font-sans px-1">
-                Чтобы попасть на мероприятие, пожалуйста, перейдите в наш свадебный канал. Там будет вся важная информация.
+                {t.channelText}
               </p>
 
               <div className="max-w-[240px] mx-auto bg-white p-3 border border-[#EBE4D8] rounded-2xl shadow-md transition-transform hover:scale-[1.01]">
                 <img
                   src="https://i.postimg.cc/fbNWSYYk/kanal-k-svad'be-Pasi-i-Lery.jpg"
-                  alt="QR-код свадебного канала"
+                  alt={t.qrAlt}
                   className="w-full h-auto rounded-xl"
                   referrerPolicy="no-referrer"
                   onLoad={() => setIsQrImageLoaded(true)}
@@ -647,7 +669,7 @@ export default function App() {
               </div>
 
               {/* 🚀 TELEGRAM REDIRECT BUTTON */}
-              <a 
+              <a
                 href="https://t.me/+-J1EjWWzu4IyNjky"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -656,14 +678,14 @@ export default function App() {
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.11.02-1.93 1.23-5.46 3.62-.51.35-.98.53-1.39.51-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.24.37-.49 1.03-.75 4.04-1.76 6.74-2.92 8.09-3.48 3.85-1.6 4.64-1.88 5.17-1.89.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.13-.03.19z"/>
                 </svg>
-                <span>Перейти в канал</span>
+                <span>{t.joinChannel}</span>
               </a>
             </div>
           </ScrollReveal>
 
           {/* Core watermark credit */}
           <div className="py-3 text-center text-[11px] text-stone-400 font-serif italic">
-            Валерия & Павел • Сохраним этот день вместе • 2026
+            {t.footer}
           </div>
 
         </div>
