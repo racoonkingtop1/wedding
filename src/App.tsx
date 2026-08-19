@@ -16,7 +16,6 @@ import {
   Music,
   Link2,
   Calendar,
-  Sparkles,
   Play,
   Pause,
   CheckCircle,
@@ -583,16 +582,35 @@ export default function App() {
                 </div>
               </ScrollReveal>
 
-              {/* Event 3: Zoom conference announcement */}
+              {/* Event 3: Zoom conference details */}
               <ScrollReveal>
-                <div className="p-4 bg-gradient-to-r from-[#F5EEE1] to-[#FAF7F2] border border-[#DDD0BC] rounded-2xl text-left space-y-1 shadow-xs">
-                  <div className="flex items-center gap-1.5 text-[#8C6F56] mb-1">
-                    <Sparkles size={13} className="animate-spin-slow" />
-                    <span className="text-[8px] font-black uppercase tracking-widest font-sans">{t.channelInfoLabel}</span>
+                <div className="p-4.5 bg-[#FAF7F2] border border-[#DDD0BC] rounded-2xl text-left space-y-3.5 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-[#8C6F56]/10 to-transparent rounded-bl-full pointer-events-none" />
+
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 bg-[#8C6F56]/10 text-[#8C6F56] rounded-lg">
+                      <Video size={14} />
+                    </span>
+                    <h4 className="font-serif font-black text-xs text-[#3E352F] uppercase">{t.zoomLabel}</h4>
                   </div>
-                  <p className="text-[11px] text-[#4E433C] leading-normal font-sans italic">
-                    {t.channelInfoText}
-                  </p>
+
+                  <div>
+                    <div className="text-[9px] font-extrabold uppercase tracking-widest text-[#8C6F56] font-sans mb-1">
+                      {t.zoomMeetingIdLabel}
+                    </div>
+                    <div className="font-mono font-black text-lg text-[#3E352F] tracking-wide">
+                      {t.zoomMeetingId}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[9px] font-extrabold uppercase tracking-widest text-[#8C6F56] font-sans mb-1">
+                      {t.zoomPasscodeLabel}
+                    </div>
+                    <div className="font-mono font-black text-lg text-[#3E352F] tracking-wide">
+                      {t.zoomPasscode}
+                    </div>
+                  </div>
                 </div>
               </ScrollReveal>
             </div>
